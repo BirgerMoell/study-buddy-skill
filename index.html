@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Buddy - AI-Powered Flashcards & Quizzes</title>
+  <meta name="description" content="Transform any learning material into interactive study sessions with spaced repetition. Works with Claude Desktop, OpenClaw, and Codex CLI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-alt: #334155;
+      --border: #475569;
+      --text: #e4e4e7;
+      --text-muted: #9ca3af;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, #1e1b4b 100%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+    
+    .hero-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+    
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    
+    .platforms {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .platform-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    
+    .platform-badge .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .dot.purple { background: var(--purple); }
+    .dot.orange { background: var(--orange); }
+    .dot.green { background: var(--green); }
+    
+    /* What Is */
+    .what-is {
+      padding: 60px 0;
+      text-align: center;
+    }
+    
+    .what-is h2 {
+      font-size: 1.75rem;
+      margin-bottom: 16px;
+    }
+    
+    .what-is p {
+      color: var(--text-muted);
+      max-width: 700px;
+      margin: 0 auto 40px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    @media (max-width: 600px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    
+    /* Features */
+    .features {
+      padding: 60px 0;
+    }
+    
+    .features h2 {
+      text-align: center;
+      font-size: 1.75rem;
+      margin-bottom: 40px;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    
+    .feature-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-card-alt));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    /* Demo Chat */
+    .demo {
+      padding: 60px 0;
+    }
+    
+    .demo h2 {
+      text-align: center;
+      font-size: 1.75rem;
+      margin-bottom: 40px;
+    }
+    
+    .chat-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .chat-message {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .chat-message:last-child {
+      border-bottom: none;
+    }
+    
+    .chat-message.user {
+      background: rgba(99, 102, 241, 0.1);
+    }
+    
+    .chat-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    
+    .chat-message.user .chat-label {
+      color: var(--green);
+    }
+    
+    .chat-text {
+      font-size: 0.95rem;
+    }
+    
+    .chat-cards {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-dark);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    
+    .chat-cards .card-preview {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .chat-cards .card-preview:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .card-front {
+      color: var(--orange);
+      flex: 1;
+    }
+    
+    .card-back {
+      color: var(--green);
+      flex: 1;
+    }
+    
+    /* Installation */
+    .install {
+      padding: 60px 0;
+    }
+    
+    .install h2 {
+      text-align: center;
+      font-size: 1.75rem;
+      margin-bottom: 16px;
+    }
+    
+    .install > p {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+    }
+    
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    
+    .tab:hover, .tab.active {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+    
+    .tab.active {
+      background: rgba(99, 102, 241, 0.2);
+    }
+    
+    .tab-content {
+      display: none;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .install-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-right: 12px;
+    }
+    
+    .step-title {
+      display: inline;
+      font-weight: 600;
+    }
+    
+    .step-content {
+      margin-top: 12px;
+      padding-left: 40px;
+    }
+    
+    pre {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      margin: 12px 0;
+    }
+    
+    code {
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+    
+    /* Use Cases */
+    .use-cases {
+      padding: 60px 0;
+    }
+    
+    .use-cases h2 {
+      text-align: center;
+      font-size: 1.75rem;
+      margin-bottom: 40px;
+    }
+    
+    .use-case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    
+    .use-case {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-card-alt));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    
+    .use-case-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+    
+    .use-case h3 {
+      margin-bottom: 8px;
+    }
+    
+    .use-case p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    /* Security */
+    .security {
+      padding: 60px 0;
+    }
+    
+    .security h2 {
+      text-align: center;
+      font-size: 1.75rem;
+      margin-bottom: 32px;
+    }
+    
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .security-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    
+    .security-item .check {
+      color: var(--green);
+      font-size: 1.25rem;
+    }
+    
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    
+    footer p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <span class="badge">● Open Source & Free</span>
+      <div class="hero-icon">🧠</div>
+      <h1>Study Buddy</h1>
+      <p class="hero-subtitle">
+        Transform any learning material into interactive flashcards and quizzes with 
+        spaced repetition. Learn smarter, not harder.
+      </p>
+      <div class="platforms">
+        <div class="platform-badge"><span class="dot purple"></span> Claude Desktop</div>
+        <div class="platform-badge"><span class="dot orange"></span> OpenClaw</div>
+        <div class="platform-badge"><span class="dot green"></span> Codex CLI</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What Is -->
+  <section class="what-is">
+    <div class="container">
+      <h2>🤔 What is Study Buddy?</h2>
+      <p>
+        Study Buddy is an AI skill that creates personalized study materials from any content. 
+        Paste your notes, point it at a PDF, or connect it to Canvas LMS — it generates 
+        flashcards and quizzes automatically. The SM-2 spaced repetition algorithm 
+        ensures you review cards at the optimal time for long-term retention.
+      </p>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">SM-2</div>
+          <div class="stat-label">Algorithm</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Platforms</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Open Source</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">0</div>
+          <div class="stat-label">Data Stored</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="container">
+      <h2>✨ Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎴</div>
+          <h3>Smart Flashcards</h3>
+          <p>Auto-generate flashcards from any text. Flip, rate, and let spaced repetition optimize your review schedule.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📝</div>
+          <h3>Interactive Quizzes</h3>
+          <p>Multiple choice, true/false, and fill-in-the-blank questions with instant feedback and explanations.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔄</div>
+          <h3>Spaced Repetition</h3>
+          <p>SM-2 algorithm tracks your performance and schedules reviews at scientifically optimal intervals.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Progress Dashboard</h3>
+          <p>Track your study streak, cards mastered, and daily activity with a beautiful dashboard.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎓</div>
+          <h3>Canvas LMS Integration</h3>
+          <p>Pull materials directly from Studium/Canvas courses. Quiz yourself on lecture content automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <h3>PDF Support</h3>
+          <p>Extract text from PDFs and generate study materials from textbooks and papers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section class="demo">
+    <div class="container">
+      <h2>💬 See It in Action</h2>
+      <div class="chat-container">
+        <div class="chat-message user">
+          <div class="chat-label">You</div>
+          <div class="chat-text">Make flashcards for these Swedish words: hund, katt, fågel, häst</div>
+        </div>
+        <div class="chat-message">
+          <div class="chat-label">AI Assistant</div>
+          <div class="chat-text">Created a deck with 4 cards! Here's what I made:</div>
+          <div class="chat-cards">
+            <div class="card-preview">
+              <span class="card-front">hund</span>
+              <span class="card-back">→ dog</span>
+            </div>
+            <div class="card-preview">
+              <span class="card-front">katt</span>
+              <span class="card-back">→ cat</span>
+            </div>
+            <div class="card-preview">
+              <span class="card-front">fågel</span>
+              <span class="card-back">→ bird</span>
+            </div>
+            <div class="card-preview">
+              <span class="card-front">häst</span>
+              <span class="card-back">→ horse</span>
+            </div>
+          </div>
+        </div>
+        <div class="chat-message user">
+          <div class="chat-label">You</div>
+          <div class="chat-text">Let's study!</div>
+        </div>
+        <div class="chat-message">
+          <div class="chat-label">AI Assistant</div>
+          <div class="chat-text">Starting your study session with 4 cards. Click the card to flip it, then rate how well you remembered!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Use Cases -->
+  <section class="use-cases">
+    <div class="container">
+      <h2>👤 Who Is It For?</h2>
+      <div class="use-case-grid">
+        <div class="use-case">
+          <div class="use-case-icon">🎓</div>
+          <h3>Students</h3>
+          <p>Turn lecture notes into flashcards. Quiz yourself before exams. Track what you've mastered and what needs more work.</p>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">🌍</div>
+          <h3>Language Learners</h3>
+          <p>Build vocabulary decks. Practice with spaced repetition. Never forget a word again.</p>
+        </div>
+        <div class="use-case">
+          <div class="use-case-icon">👩‍💻</div>
+          <h3>Professionals</h3>
+          <p>Study for certifications. Keep technical knowledge fresh. Learn new frameworks efficiently.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section class="install">
+    <div class="container">
+      <h2>🚀 Get Started</h2>
+      <p>Choose your platform and follow the steps below.</p>
+      
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('claude')">Claude Desktop</div>
+        <div class="tab" onclick="showTab('openclaw')">OpenClaw</div>
+        <div class="tab" onclick="showTab('codex')">Codex CLI</div>
+      </div>
+      
+      <div id="claude" class="tab-content active">
+        <div class="install-step">
+          <span class="step-number">1</span>
+          <span class="step-title">Clone & Install</span>
+          <div class="step-content">
+            <pre><code>git clone https://github.com/birgermoell/study-buddy-skill.git
+cd study-buddy-skill
+pip install -e ".[mcp]"</code></pre>
+          </div>
+        </div>
+        <div class="install-step">
+          <span class="step-number">2</span>
+          <span class="step-title">Add to Claude config</span>
+          <div class="step-content">
+            <p>Edit <code>~/Library/Application Support/Claude/claude_desktop_config.json</code></p>
+            <pre><code>{
+  "mcpServers": {
+    "study-buddy": {
+      "command": "python3",
+      "args": ["/path/to/study-buddy-skill/src/mcp_server.py"]
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
+        <div class="install-step">
+          <span class="step-number">3</span>
+          <span class="step-title">Restart Claude Desktop</span>
+          <div class="step-content">
+            <p>Look for the 🔧 tools icon — you're ready!</p>
+          </div>
+        </div>
+      </div>
+      
+      <div id="openclaw" class="tab-content">
+        <div class="install-step">
+          <span class="step-number">1</span>
+          <span class="step-title">Clone to workspace</span>
+          <div class="step-content">
+            <pre><code>cd ~/.openclaw/workspace/skills
+git clone https://github.com/birgermoell/study-buddy-skill.git study-buddy</code></pre>
+          </div>
+        </div>
+        <div class="install-step">
+          <span class="step-number">2</span>
+          <span class="step-title">Done!</span>
+          <div class="step-content">
+            <p>OpenClaw auto-discovers skills. Just ask: "Create flashcards for..."</p>
+          </div>
+        </div>
+      </div>
+      
+      <div id="codex" class="tab-content">
+        <div class="install-step">
+          <span class="step-number">1</span>
+          <span class="step-title">Clone the repo</span>
+          <div class="step-content">
+            <pre><code>git clone https://github.com/birgermoell/study-buddy-skill.git</code></pre>
+          </div>
+        </div>
+        <div class="install-step">
+          <span class="step-number">2</span>
+          <span class="step-title">Reference in AGENTS.md</span>
+          <div class="step-content">
+            <pre><code>## External Skills
+- [Study Buddy](./study-buddy-skill/AGENTS.md) - Flashcards & Quizzes</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security -->
+  <section class="security">
+    <div class="container">
+      <h2>🔒 Privacy First</h2>
+      <div class="security-grid">
+        <div class="security-item">
+          <span class="check">✓</span>
+          <span>100% Local — All data stays on your machine</span>
+        </div>
+        <div class="security-item">
+          <span class="check">✓</span>
+          <span>No Servers — No cloud, no accounts required</span>
+        </div>
+        <div class="security-item">
+          <span class="check">✓</span>
+          <span>Open Source — Audit the code yourself</span>
+        </div>
+        <div class="security-item">
+          <span class="check">✓</span>
+          <span>Your Data — Export or delete anytime</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>
+        Made with 🧠 by <a href="https://github.com/birgermoell">Birger Moëll</a> · 
+        <a href="https://github.com/birgermoell/study-buddy-skill">GitHub</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add('active');
+      document.getElementById(id).classList.add('active');
+    }
+  </script>
+</body>
+</html>

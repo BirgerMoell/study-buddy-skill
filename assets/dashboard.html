@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      min-height: 100vh;
+      padding: 24px;
+      color: #e4e4e7;
+    }
+    
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+      max-width: 800px;
+      margin: 0 auto 32px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(145deg, #1e293b, #334155);
+      border: 1px solid #475569;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .stat-value.green { color: #10b981; }
+    .stat-value.blue { color: #6366f1; }
+    .stat-value.orange { color: #f59e0b; }
+    .stat-value.red { color: #ef4444; }
+    
+    .stat-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .section {
+      max-width: 800px;
+      margin: 0 auto 24px;
+    }
+    
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #d1d5db;
+    }
+    
+    .deck-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .deck-card {
+      background: linear-gradient(145deg, #1e293b, #334155);
+      border: 1px solid #475569;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .deck-info h3 {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    
+    .deck-meta {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    
+    .deck-badges {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .badge.due {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+    
+    .badge.new {
+      background: #1e3a5f;
+      color: #93c5fd;
+    }
+    
+    .badge.mastered {
+      background: #064e3b;
+      color: #a7f3d0;
+    }
+    
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      max-width: 400px;
+    }
+    
+    .heatmap-day {
+      aspect-ratio: 1;
+      border-radius: 4px;
+      background: #374151;
+    }
+    
+    .heatmap-day.level-1 { background: #064e3b; }
+    .heatmap-day.level-2 { background: #059669; }
+    .heatmap-day.level-3 { background: #10b981; }
+    .heatmap-day.level-4 { background: #34d399; }
+    
+    .empty-state {
+      text-align: center;
+      padding: 48px;
+      color: #6b7280;
+    }
+    
+    .empty-state p {
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📚 Study Dashboard</h1>
+
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value blue" id="total-cards">0</div>
+      <div class="stat-label">Total Cards</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value orange" id="due-today">0</div>
+      <div class="stat-label">Due Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value green" id="mastered">0</div>
+      <div class="stat-label">Mastered</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="streak">0</div>
+      <div class="stat-label">Day Streak</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Your Decks</div>
+    <div class="deck-list" id="deck-list">
+      <div class="empty-state">
+        <p>No study decks yet</p>
+        <p style="font-size: 0.85rem">Ask me to create flashcards or a quiz from any material!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Study Activity (Last 4 Weeks)</div>
+    <div class="heatmap" id="heatmap"></div>
+  </div>
+
+  <script>
+    // Data injected as: const STUDY_DATA = {...}
+    
+    /*STUDY_DATA*/
+    
+    function init() {
+      if (typeof STUDY_DATA === 'undefined') {
+        return;
+      }
+      
+      const data = STUDY_DATA;
+      
+      // Stats
+      document.getElementById('total-cards').textContent = data.totalCards || 0;
+      document.getElementById('due-today').textContent = data.dueToday || 0;
+      document.getElementById('mastered').textContent = data.mastered || 0;
+      document.getElementById('streak').textContent = data.streak || 0;
+      
+      // Decks
+      if (data.decks && data.decks.length > 0) {
+        const deckList = document.getElementById('deck-list');
+        deckList.innerHTML = '';
+        
+        data.decks.forEach(deck => {
+          const div = document.createElement('div');
+          div.className = 'deck-card';
+          
+          let badges = '';
+          if (deck.due > 0) badges += `<span class="badge due">${deck.due} due</span>`;
+          if (deck.new > 0) badges += `<span class="badge new">${deck.new} new</span>`;
+          if (deck.mastered > 0) badges += `<span class="badge mastered">${deck.mastered} mastered</span>`;
+          
+          div.innerHTML = `
+            <div class="deck-info">
+              <h3>${deck.name}</h3>
+              <div class="deck-meta">${deck.cardCount} cards · ${deck.source || 'Manual'}</div>
+            </div>
+            <div class="deck-badges">${badges}</div>
+          `;
+          deckList.appendChild(div);
+        });
+      }
+      
+      // Heatmap
+      const heatmap = document.getElementById('heatmap');
+      const activity = data.activity || {};
+      const today = new Date();
+      
+      for (let i = 27; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const key = date.toISOString().split('T')[0];
+        const count = activity[key] || 0;
+        
+        const div = document.createElement('div');
+        div.className = 'heatmap-day';
+        if (count > 0) div.classList.add('level-' + Math.min(4, Math.ceil(count / 10)));
+        div.title = `${key}: ${count} cards`;
+        heatmap.appendChild(div);
+      }
+    }
+    
+    init();
+  </script>
+</body>
+</html>

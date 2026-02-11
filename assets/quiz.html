@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      min-height: 100vh;
+      padding: 24px;
+      color: #e4e4e7;
+    }
+    
+    .quiz-header {
+      max-width: 600px;
+      margin: 0 auto 24px;
+      text-align: center;
+    }
+    
+    .quiz-header h1 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+    
+    .progress-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .progress-bar {
+      flex: 1;
+      height: 8px;
+      background: #374151;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+      font-size: 0.875rem;
+      color: #9ca3af;
+      min-width: 60px;
+    }
+    
+    .question-card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: linear-gradient(145deg, #1e293b, #334155);
+      border: 1px solid #475569;
+      border-radius: 16px;
+      padding: 32px;
+    }
+    
+    .question-number {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #6366f1;
+      margin-bottom: 12px;
+    }
+    
+    .question-text {
+      font-size: 1.25rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .option {
+      padding: 16px 20px;
+      background: #0f172a;
+      border: 2px solid #374151;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .option:hover:not(.disabled) {
+      border-color: #6366f1;
+      background: #1e1b4b;
+    }
+    
+    .option.selected {
+      border-color: #6366f1;
+      background: #312e81;
+    }
+    
+    .option.correct {
+      border-color: #10b981;
+      background: #064e3b;
+    }
+    
+    .option.incorrect {
+      border-color: #ef4444;
+      background: #7f1d1d;
+    }
+    
+    .option.disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+    
+    .option-letter {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: #374151;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    
+    .option.correct .option-letter {
+      background: #10b981;
+    }
+    
+    .option.incorrect .option-letter {
+      background: #ef4444;
+    }
+    
+    .option-text {
+      flex: 1;
+    }
+    
+    .feedback {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    
+    .feedback.correct {
+      background: #064e3b;
+      border: 1px solid #10b981;
+    }
+    
+    .feedback.incorrect {
+      background: #7f1d1d;
+      border: 1px solid #ef4444;
+    }
+    
+    .feedback-icon {
+      font-size: 1.25rem;
+      margin-right: 8px;
+    }
+    
+    .explanation {
+      margin-top: 8px;
+      color: #d1d5db;
+      font-size: 0.85rem;
+    }
+    
+    .next-btn {
+      margin-top: 24px;
+      width: 100%;
+      padding: 14px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .next-btn:hover {
+      background: #4f46e5;
+    }
+    
+    .hidden { display: none; }
+    
+    .results {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 48px 32px;
+      background: linear-gradient(145deg, #1e293b, #334155);
+      border: 1px solid #475569;
+      border-radius: 16px;
+    }
+    
+    .results h2 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    
+    .score {
+      font-size: 4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .score-label {
+      color: #9ca3af;
+      margin-bottom: 24px;
+    }
+    
+    .breakdown {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+    
+    .breakdown-item {
+      text-align: center;
+    }
+    
+    .breakdown-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .breakdown-value.correct { color: #10b981; }
+    .breakdown-value.incorrect { color: #ef4444; }
+    
+    .breakdown-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+    }
+    
+    .retry-btn {
+      padding: 14px 48px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-header">
+    <h1 id="quiz-title">Quiz</h1>
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress" style="width: 0%"></div>
+      </div>
+      <div class="progress-text"><span id="current">1</span>/<span id="total">0</span></div>
+    </div>
+  </div>
+
+  <div class="question-card" id="question-card">
+    <div class="question-number" id="question-number">Question 1</div>
+    <div class="question-text" id="question-text"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback hidden" id="feedback">
+      <span class="feedback-icon" id="feedback-icon"></span>
+      <span id="feedback-text"></span>
+      <div class="explanation" id="explanation"></div>
+    </div>
+    <button class="next-btn hidden" id="next-btn" onclick="nextQuestion()">Next Question</button>
+  </div>
+
+  <div class="results hidden" id="results">
+    <h2>Quiz Complete!</h2>
+    <div class="score" id="final-score">0%</div>
+    <div class="score-label">Overall Score</div>
+    <div class="breakdown">
+      <div class="breakdown-item">
+        <div class="breakdown-value correct" id="correct-count">0</div>
+        <div class="breakdown-label">Correct</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="breakdown-value incorrect" id="incorrect-count">0</div>
+        <div class="breakdown-label">Incorrect</div>
+      </div>
+    </div>
+    <button class="retry-btn" onclick="location.reload()">Try Again</button>
+  </div>
+
+  <script>
+    // Questions injected as: const QUESTIONS = [...]
+    // Format: { question, options: [], correct: 0, explanation?: "" }
+    
+    /*QUESTIONS_DATA*/
+    
+    let currentIndex = 0;
+    let correctCount = 0;
+    let answered = false;
+    
+    function init() {
+      if (typeof QUESTIONS === 'undefined' || QUESTIONS.length === 0) {
+        document.body.innerHTML = '<div class="results"><h2>No questions</h2></div>';
+        return;
+      }
+      
+      document.getElementById('total').textContent = QUESTIONS.length;
+      document.getElementById('quiz-title').textContent = QUIZ_TITLE || 'Quiz';
+      showQuestion();
+    }
+    
+    function showQuestion() {
+      answered = false;
+      const q = QUESTIONS[currentIndex];
+      
+      document.getElementById('question-number').textContent = `Question ${currentIndex + 1}`;
+      document.getElementById('question-text').textContent = q.question;
+      document.getElementById('current').textContent = currentIndex + 1;
+      document.getElementById('progress').style.width = 
+        ((currentIndex / QUESTIONS.length) * 100) + '%';
+      
+      const optionsEl = document.getElementById('options');
+      optionsEl.innerHTML = '';
+      
+      const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+      q.options.forEach((opt, i) => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.innerHTML = `
+          <div class="option-letter">${letters[i]}</div>
+          <div class="option-text">${opt}</div>
+        `;
+        div.onclick = () => selectOption(i);
+        optionsEl.appendChild(div);
+      });
+      
+      document.getElementById('feedback').classList.add('hidden');
+      document.getElementById('next-btn').classList.add('hidden');
+    }
+    
+    function selectOption(index) {
+      if (answered) return;
+      answered = true;
+      
+      const q = QUESTIONS[currentIndex];
+      const isCorrect = index === q.correct;
+      
+      if (isCorrect) correctCount++;
+      
+      const options = document.querySelectorAll('.option');
+      options.forEach((opt, i) => {
+        opt.classList.add('disabled');
+        if (i === q.correct) opt.classList.add('correct');
+        else if (i === index) opt.classList.add('incorrect');
+      });
+      
+      const feedback = document.getElementById('feedback');
+      feedback.classList.remove('hidden', 'correct', 'incorrect');
+      feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+      
+      document.getElementById('feedback-icon').textContent = isCorrect ? '✓' : '✗';
+      document.getElementById('feedback-text').textContent = isCorrect ? 'Correct!' : 'Incorrect';
+      document.getElementById('explanation').textContent = q.explanation || '';
+      
+      document.getElementById('next-btn').classList.remove('hidden');
+      document.getElementById('next-btn').textContent = 
+        currentIndex < QUESTIONS.length - 1 ? 'Next Question' : 'See Results';
+      
+      window.parent?.postMessage({
+        type: 'questionAnswer',
+        data: { question: currentIndex, correct: isCorrect, selected: index }
+      }, '*');
+    }
+    
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex >= QUESTIONS.length) {
+        showResults();
+      } else {
+        showQuestion();
+      }
+    }
+    
+    function showResults() {
+      document.getElementById('question-card').classList.add('hidden');
+      document.getElementById('results').classList.remove('hidden');
+      document.getElementById('progress').style.width = '100%';
+      
+      const score = Math.round((correctCount / QUESTIONS.length) * 100);
+      document.getElementById('final-score').textContent = score + '%';
+      document.getElementById('correct-count').textContent = correctCount;
+      document.getElementById('incorrect-count').textContent = QUESTIONS.length - correctCount;
+      
+      window.parent?.postMessage({
+        type: 'quizComplete',
+        data: { score, correct: correctCount, total: QUESTIONS.length }
+      }, '*');
+    }
+    
+    init();
+  </script>
+</body>
+</html>

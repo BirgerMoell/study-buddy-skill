@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Cards</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      color: #e4e4e7;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #f4f4f5;
+      margin-bottom: 8px;
+    }
+    
+    .progress-bar {
+      width: 300px;
+      height: 6px;
+      background: #374151;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      transition: width 0.3s ease;
+    }
+    
+    .stats {
+      font-size: 0.875rem;
+      color: #9ca3af;
+    }
+    
+    .card-container {
+      perspective: 1000px;
+      width: 100%;
+      max-width: 500px;
+      height: 300px;
+      margin-bottom: 24px;
+    }
+    
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+      cursor: pointer;
+    }
+    
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+    
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 32px;
+      text-align: center;
+    }
+    
+    .card-front {
+      background: linear-gradient(145deg, #1e293b, #334155);
+      border: 1px solid #475569;
+    }
+    
+    .card-back {
+      background: linear-gradient(145deg, #312e81, #4338ca);
+      border: 1px solid #6366f1;
+      transform: rotateY(180deg);
+    }
+    
+    .card-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+    
+    .card-content {
+      font-size: 1.25rem;
+      line-height: 1.6;
+      color: #f4f4f5;
+    }
+    
+    .card-hint {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 24px;
+    }
+    
+    .rating-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .rating-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .rating-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .rating-btn.again {
+      background: #7f1d1d;
+      color: #fecaca;
+    }
+    
+    .rating-btn.hard {
+      background: #78350f;
+      color: #fde68a;
+    }
+    
+    .rating-btn.good {
+      background: #14532d;
+      color: #bbf7d0;
+    }
+    
+    .rating-btn.easy {
+      background: #1e3a5f;
+      color: #93c5fd;
+    }
+    
+    .rating-btn .interval {
+      display: block;
+      font-size: 0.7rem;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+    
+    .hidden { display: none; }
+    
+    .complete {
+      text-align: center;
+      padding: 48px;
+    }
+    
+    .complete h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      color: #10b981;
+    }
+    
+    .complete p {
+      color: #9ca3af;
+      margin-bottom: 24px;
+    }
+    
+    .complete button {
+      padding: 12px 32px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 id="deck-title">Study Session</h1>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress" style="width: 0%"></div>
+    </div>
+    <div class="stats">
+      <span id="current">0</span> / <span id="total">0</span> cards
+    </div>
+  </div>
+
+  <div class="card-container" id="card-container">
+    <div class="card" id="card" onclick="flipCard()">
+      <div class="card-face card-front">
+        <div class="card-label">Question</div>
+        <div class="card-content" id="front-content"></div>
+        <div class="card-hint">Click to reveal</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="card-label">Answer</div>
+        <div class="card-content" id="back-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rating-buttons hidden" id="rating-buttons">
+    <button class="rating-btn again" onclick="rateCard(0)">
+      Again
+      <span class="interval" id="again-interval">&lt;1m</span>
+    </button>
+    <button class="rating-btn hard" onclick="rateCard(1)">
+      Hard
+      <span class="interval" id="hard-interval">1d</span>
+    </button>
+    <button class="rating-btn good" onclick="rateCard(2)">
+      Good
+      <span class="interval" id="good-interval">3d</span>
+    </button>
+    <button class="rating-btn easy" onclick="rateCard(3)">
+      Easy
+      <span class="interval" id="easy-interval">7d</span>
+    </button>
+  </div>
+
+  <div class="complete hidden" id="complete">
+    <h2>🎉 Session Complete!</h2>
+    <p id="summary"></p>
+    <button onclick="location.reload()">Study Again</button>
+  </div>
+
+  <script>
+    // Cards will be injected here as: const CARDS = [...]
+    // Format: { id, front, back, interval, ease, due, reps }
+    
+    /*CARDS_DATA*/
+    
+    let currentIndex = 0;
+    let sessionStats = { again: 0, hard: 0, good: 0, easy: 0 };
+    let cardsToReview = [];
+    
+    function init() {
+      if (typeof CARDS === 'undefined' || CARDS.length === 0) {
+        document.body.innerHTML = '<div class="complete"><h2>No cards to study</h2><p>Add some cards first!</p></div>';
+        return;
+      }
+      
+      // Filter cards due for review (or all if no due dates)
+      const now = Date.now();
+      cardsToReview = CARDS.filter(c => !c.due || c.due <= now);
+      
+      if (cardsToReview.length === 0) {
+        document.body.innerHTML = '<div class="complete"><h2>All caught up! 🎯</h2><p>No cards due for review. Come back later.</p></div>';
+        return;
+      }
+      
+      // Shuffle
+      cardsToReview.sort(() => Math.random() - 0.5);
+      
+      document.getElementById('total').textContent = cardsToReview.length;
+      document.getElementById('deck-title').textContent = DECK_TITLE || 'Study Session';
+      showCard();
+    }
+    
+    function showCard() {
+      if (currentIndex >= cardsToReview.length) {
+        showComplete();
+        return;
+      }
+      
+      const card = cardsToReview[currentIndex];
+      document.getElementById('front-content').textContent = card.front;
+      document.getElementById('back-content').textContent = card.back;
+      document.getElementById('card').classList.remove('flipped');
+      document.getElementById('rating-buttons').classList.add('hidden');
+      document.getElementById('current').textContent = currentIndex + 1;
+      document.getElementById('progress').style.width = 
+        ((currentIndex / cardsToReview.length) * 100) + '%';
+      
+      // Update interval hints
+      updateIntervalHints(card);
+    }
+    
+    function flipCard() {
+      const card = document.getElementById('card');
+      if (!card.classList.contains('flipped')) {
+        card.classList.add('flipped');
+        document.getElementById('rating-buttons').classList.remove('hidden');
+      }
+    }
+    
+    function updateIntervalHints(card) {
+      const intervals = calculateIntervals(card);
+      document.getElementById('again-interval').textContent = formatInterval(intervals.again);
+      document.getElementById('hard-interval').textContent = formatInterval(intervals.hard);
+      document.getElementById('good-interval').textContent = formatInterval(intervals.good);
+      document.getElementById('easy-interval').textContent = formatInterval(intervals.easy);
+    }
+    
+    function calculateIntervals(card) {
+      // SM-2 algorithm simplified
+      const ease = card.ease || 2.5;
+      const interval = card.interval || 1;
+      
+      return {
+        again: 1, // 1 minute (re-queue)
+        hard: Math.max(1, Math.round(interval * 1.2)),
+        good: Math.max(1, Math.round(interval * ease)),
+        easy: Math.max(1, Math.round(interval * ease * 1.3))
+      };
+    }
+    
+    function formatInterval(days) {
+      if (days < 1) return '<1m';
+      if (days === 1) return '1d';
+      if (days < 30) return days + 'd';
+      if (days < 365) return Math.round(days / 30) + 'mo';
+      return Math.round(days / 365) + 'y';
+    }
+    
+    function rateCard(rating) {
+      const card = cardsToReview[currentIndex];
+      const ratingNames = ['again', 'hard', 'good', 'easy'];
+      sessionStats[ratingNames[rating]]++;
+      
+      // Calculate new values (SM-2)
+      const intervals = calculateIntervals(card);
+      const newInterval = [intervals.again, intervals.hard, intervals.good, intervals.easy][rating];
+      
+      // Adjust ease factor
+      let newEase = card.ease || 2.5;
+      if (rating === 0) newEase = Math.max(1.3, newEase - 0.2);
+      else if (rating === 1) newEase = Math.max(1.3, newEase - 0.15);
+      else if (rating === 3) newEase = newEase + 0.15;
+      
+      // Report back via postMessage
+      const update = {
+        id: card.id,
+        interval: newInterval,
+        ease: newEase,
+        due: Date.now() + (newInterval * 24 * 60 * 60 * 1000),
+        reps: (card.reps || 0) + 1,
+        lastRating: rating
+      };
+      
+      window.parent?.postMessage({ type: 'cardUpdate', data: update }, '*');
+      
+      currentIndex++;
+      showCard();
+    }
+    
+    function showComplete() {
+      document.getElementById('card-container').classList.add('hidden');
+      document.getElementById('rating-buttons').classList.add('hidden');
+      document.getElementById('complete').classList.remove('hidden');
+      document.getElementById('progress').style.width = '100%';
+      
+      const total = Object.values(sessionStats).reduce((a, b) => a + b, 0);
+      const accuracy = total > 0 ? Math.round(((sessionStats.good + sessionStats.easy) / total) * 100) : 0;
+      
+      document.getElementById('summary').innerHTML = 
+        `Reviewed ${total} cards with ${accuracy}% recall<br>` +
+        `<small style="color:#6b7280">Again: ${sessionStats.again} · Hard: ${sessionStats.hard} · Good: ${sessionStats.good} · Easy: ${sessionStats.easy}</small>`;
+      
+      window.parent?.postMessage({ type: 'sessionComplete', data: sessionStats }, '*');
+    }
+    
+    init();
+  </script>
+</body>
+</html>
