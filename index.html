@@ -638,33 +638,30 @@
       <div id="claude" class="tab-content active">
         <div class="install-step">
           <span class="step-number">1</span>
-          <span class="step-title">Clone & Install</span>
+          <span class="step-title">Clone the repo</span>
           <div class="step-content">
-            <pre><code>git clone https://github.com/birgermoell/study-buddy-skill.git
-cd study-buddy-skill
-pip install -e ".[mcp]"</code></pre>
+            <pre><code>git clone https://github.com/birgermoell/study-buddy-skill.git</code></pre>
           </div>
         </div>
         <div class="install-step">
           <span class="step-number">2</span>
-          <span class="step-title">Add to Claude config</span>
+          <span class="step-title">Open in Cowork</span>
           <div class="step-content">
-            <p>Edit <code>~/Library/Application Support/Claude/claude_desktop_config.json</code></p>
-            <pre><code>{
-  "mcpServers": {
-    "study-buddy": {
-      "command": "python3",
-      "args": ["/path/to/study-buddy-skill/src/mcp_server.py"]
-    }
-  }
-}</code></pre>
+            <p>Open Claude Desktop and start a <strong>Cowork session</strong>. Select the <code>study-buddy-skill</code> folder as your workspace. Claude reads <code>SKILL.md</code> automatically.</p>
           </div>
         </div>
         <div class="install-step">
           <span class="step-number">3</span>
-          <span class="step-title">Restart Claude Desktop</span>
+          <span class="step-title">Start studying!</span>
           <div class="step-content">
-            <p>Look for the 🔧 tools icon — you're ready!</p>
+            <p>Just say <em>"Make flashcards for..."</em> or <em>"Quiz me on..."</em> — Claude generates interactive HTML widgets that render inline in the conversation. Click answers, flip cards, rate your recall.</p>
+          </div>
+        </div>
+        <div class="install-step">
+          <span class="step-number">+</span>
+          <span class="step-title">Optional: Connect to Studium</span>
+          <div class="step-content">
+            <p>Say <em>"Connect to Studium"</em> to link your Canvas LMS account. Claude walks you through generating an API token and fetching course content automatically.</p>
           </div>
         </div>
       </div>
