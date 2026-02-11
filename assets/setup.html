@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Buddy — Connect to Studium</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      min-height: 100vh;
+      padding: 24px;
+      color: #e4e4e7;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header-icon {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #9ca3af;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: linear-gradient(145deg, #1e293b, #334155);
+      border: 1px solid #475569;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: #6366f1;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .instructions {
+      color: #d1d5db;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .instructions ol {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .instructions li {
+      margin-bottom: 8px;
+    }
+
+    .instructions a {
+      color: #818cf8;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .instructions a:hover {
+      text-decoration: underline;
+    }
+
+    .highlight {
+      background: #312e81;
+      border: 1px solid #4338ca;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #c7d2fe;
+    }
+
+    .token-section {
+      margin-top: 20px;
+    }
+
+    .token-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #d1d5db;
+      margin-bottom: 8px;
+    }
+
+    .token-input-wrapper {
+      position: relative;
+      display: flex;
+      gap: 8px;
+    }
+
+    .token-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #0f172a;
+      border: 2px solid #374151;
+      border-radius: 10px;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .token-input:focus {
+      border-color: #6366f1;
+    }
+
+    .token-input::placeholder {
+      color: #4b5563;
+    }
+
+    .toggle-visibility {
+      padding: 12px 14px;
+      background: #374151;
+      border: 2px solid #374151;
+      border-radius: 10px;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .toggle-visibility:hover {
+      background: #4b5563;
+      color: #e4e4e7;
+    }
+
+    .save-btn {
+      margin-top: 16px;
+      width: 100%;
+      padding: 14px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .save-btn:hover {
+      background: #4f46e5;
+    }
+
+    .save-btn:disabled {
+      background: #374151;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .status.success {
+      display: block;
+      background: #064e3b;
+      border: 1px solid #10b981;
+      color: #a7f3d0;
+    }
+
+    .status.error {
+      display: block;
+      background: #7f1d1d;
+      border: 1px solid #ef4444;
+      color: #fecaca;
+    }
+
+    .status.info {
+      display: block;
+      background: #1e3a5f;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+    }
+
+    .privacy-note {
+      margin-top: 20px;
+      padding: 14px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: #a5b4fc;
+      line-height: 1.5;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .privacy-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 16px; }
+      .card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-icon">🧠</div>
+      <h1>Connect Study Buddy to Studium</h1>
+      <p>Link your Uppsala University Canvas account to generate quizzes and flashcards from your course materials.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-number">1</span> Get your API token</h2>
+      <div class="instructions">
+        <ol>
+          <li>Open <a href="https://uppsala.instructure.com/profile/settings" target="_blank">Studium Settings</a></li>
+          <li>Scroll down to <strong>Approved Integrations</strong></li>
+          <li>Click <span class="highlight">+ New Access Token</span></li>
+          <li>Set the purpose to <strong>Study Buddy</strong></li>
+          <li>Click <strong>Generate Token</strong></li>
+          <li>Copy the token (you'll only see it once!)</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-number">2</span> Paste your token below</h2>
+      <div class="instructions">
+        <p>Your token stays on your machine and is never sent to any third party.</p>
+      </div>
+      <div class="token-section">
+        <label class="token-label" for="token-input">Canvas API Token</label>
+        <div class="token-input-wrapper">
+          <input
+            type="password"
+            id="token-input"
+            class="token-input"
+            placeholder="Paste your token here..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button class="toggle-visibility" id="toggle-btn" onclick="toggleVisibility()" title="Show/hide token">
+            👁
+          </button>
+        </div>
+        <button class="save-btn" id="save-btn" onclick="saveToken()" disabled>
+          <span>Connect to Studium</span>
+        </button>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+
+    <div class="privacy-note">
+      <span class="privacy-icon">🔒</span>
+      <span>Your token is saved locally in <code>.env.studium</code> inside the skill folder. It's never uploaded or shared. You can revoke it anytime from your Studium settings.</span>
+    </div>
+  </div>
+
+  <script>
+    var tokenInput = document.getElementById('token-input');
+    var saveBtn = document.getElementById('save-btn');
+    var statusEl = document.getElementById('status');
+    var isVisible = false;
+
+    // Enable/disable button based on input
+    tokenInput.addEventListener('input', function() {
+      var hasValue = tokenInput.value.trim().length > 10;
+      saveBtn.disabled = !hasValue;
+    });
+
+    function toggleVisibility() {
+      isVisible = !isVisible;
+      tokenInput.type = isVisible ? 'text' : 'password';
+      document.getElementById('toggle-btn').textContent = isVisible ? '🙈' : '👁';
+    }
+
+    function saveToken() {
+      var token = tokenInput.value.trim();
+      if (!token) return;
+
+      // Send the token to the parent (Claude) via postMessage
+      try {
+        window.parent.postMessage({
+          type: 'studiumToken',
+          data: { token: token }
+        }, '*');
+      } catch(e) {}
+
+      // Show success state
+      statusEl.className = 'status success';
+      statusEl.innerHTML = '✓ Token received! Claude will now save it and verify your connection.';
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span>✓ Token sent</span>';
+    }
+
+    // Allow Enter key to submit
+    tokenInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !saveBtn.disabled) {
+        saveToken();
+      }
+    });
+
+    // Auto-focus the input
+    tokenInput.focus();
+  </script>
+</body>
+</html>

@@ -8,13 +8,28 @@ Data stored in workspace/study-data/
 
 import json
 import hashlib
+import os
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional
 import sys
 
-# Default data directory
-DATA_DIR = Path.home() / ".openclaw" / "workspace" / "study-data"
+# Default data directory — configurable via STUDY_DATA_DIR env var.
+# Auto-detects OpenClaw workspace if it exists, otherwise uses ~/.study-buddy/data/
+def _default_data_dir() -> Path:
+    """Pick the best default data directory for the current environment."""
+    # 1. Explicit env var always wins
+    env = os.environ.get("STUDY_DATA_DIR")
+    if env:
+        return Path(env)
+    # 2. OpenClaw / ClawdBot workspace
+    openclaw = Path.home() / ".openclaw" / "workspace" / "study-data"
+    if openclaw.parent.exists():
+        return openclaw
+    # 3. Generic fallback
+    return Path.home() / ".study-buddy" / "data"
+
+DATA_DIR = _default_data_dir()
 
 
 def ensure_data_dir():

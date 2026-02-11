@@ -6,8 +6,8 @@ This skill helps users create and study flashcards and quizzes with spaced repet
 
 | User Says | Do This |
 |-----------|---------|
-| "Make flashcards for..." | Generate cards, create deck, present in Canvas |
-| "Quiz me on..." | Generate quiz questions, present interactive quiz |
+| "Make flashcards for..." | Generate cards, create deck, present interactive widget |
+| "Quiz me on..." | Generate quiz questions, present interactive quiz widget |
 | "What's due for review?" | Check due cards, start study session |
 | "Show my study dashboard" | Display progress dashboard |
 
@@ -18,13 +18,14 @@ This skill helps users create and study flashcards and quizzes with spaced repet
 1. Parse the content (pasted text, Studium content, etc.)
 2. Generate front/back pairs for key concepts
 3. Call `create_deck()` from `scripts/study_manager.py`
-4. Present via Canvas with `assets/flashcards.html`
+4. Inject data into `assets/flashcards.html` template
+5. Present: Canvas tool (OpenClaw/ClawdBot), `computer://` link (Claude Desktop), or file path (Codex CLI)
 
 ### Running a Quiz
 
 1. Generate questions with options and correct answers
 2. Inject into `assets/quiz.html` template
-3. Present via Canvas
+3. Present: Canvas tool (OpenClaw/ClawdBot), `computer://` link (Claude Desktop), or file path (Codex CLI)
 4. Log results when complete
 
 ### Spaced Repetition
@@ -77,6 +78,9 @@ const CARDS = {json.dumps(deck["cards"])};
 
 ## Data Location
 
-`~/.openclaw/workspace/study-data/`
+Auto-detected per environment:
+- **OpenClaw/ClawdBot**: `~/.openclaw/workspace/study-data/`
+- **Other environments**: `~/.study-buddy/data/`
+- **Override**: Set `STUDY_DATA_DIR` env var to any path
 
 See SKILL.md for detailed instructions.

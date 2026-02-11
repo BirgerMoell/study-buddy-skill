@@ -1,6 +1,6 @@
 ---
 name: study-buddy
-description: Generate interactive quizzes, flashcards, and study materials from any content. Uses spaced repetition (Anki-style SM-2) for effective learning. Displays via Canvas for inline interactive experience. Integrates with Studium (Canvas LMS) and supports PDFs. Use when students want to study, review, create flashcards, take quizzes, or learn from course materials.
+description: Generate interactive quizzes, flashcards, and study materials from any content. Uses spaced repetition (Anki-style SM-2) for effective learning. Produces self-contained HTML widgets that render inline. Integrates with Studium (Canvas LMS) and supports PDFs. Use this skill whenever students want to study, review, create flashcards, take quizzes, learn from course materials, memorize vocabulary, or prepare for exams — even if they don't explicitly say "flashcard" or "quiz".
 ---
 
 # Study Buddy
@@ -9,89 +9,198 @@ Transform any learning material into interactive study sessions with spaced repe
 
 ## Quick Start
 
-### From Studium (Primary Flow)
 ```
 User: "Quiz me on my latest lecture"
 User: "Make flashcards from my NLP course"
 User: "Create a quiz from this week's readings"
-→ Fetch from Studium → Generate questions → Present in Canvas
-```
-
-### From Pasted Content
-```
 User: "Make flashcards from these notes: [content]"
-→ Generate cards, save deck, present in Canvas
-```
-
-### Review Due Cards
-```
 User: "What should I study today?"
-→ Show due cards from spaced repetition queue
 ```
 
-## Studium Integration (Primary)
+## First-Time Setup: Connecting to Studium
 
-### Fetch Latest Lecture → Generate Quiz
+The primary content source is Studium (Uppsala University's Canvas LMS). On first use, walk the user through connecting their account. This only needs to happen once.
+
+### Onboarding Flow
+
+When the user asks to study from their courses and no `.env.studium` file exists (or `STUDIUM_API_KEY` is not set), present the interactive setup page.
+
+**Step 1 — Show the setup widget:**
+
+Present `assets/setup.html` as an inline widget. It contains step-by-step instructions for generating a Canvas API token and a password field where the user can paste it securely.
 
 ```python
-# 1. Get content from Studium
-import os
-os.environ["STUDIUM_API_KEY"] = "..."  # From .env.studium
+from pathlib import Path
 
-from scripts.studium_quiz import find_latest_lecture_content, generate_quiz_prompts
-
-# Find recent content
-content = find_latest_lecture_content(course_id=None)  # Auto-picks recent course
-# Or specify: find_latest_lecture_content(course_id=12345)
-
-# 2. Generate prompt for quiz/flashcards
-prompt = generate_quiz_prompts(content["latest"]["content"], content["latest"]["title"])
-# Or: generate_flashcard_prompts(...)
-
-# 3. Use LLM to generate questions from prompt
-# (The prompt is designed for the agent to process)
-
-# 4. Save and present
+skill_dir = Path("<skill-directory>")
+setup_html = (skill_dir / "assets" / "setup.html").read_text()
+Path("<outputs-folder>/studium-setup.html").write_text(setup_html)
 ```
+
+Then link it: `[Connect to Studium](computer://<outputs-folder>/studium-setup.html)`
+
+Tell the user: "I've opened the setup page — follow the steps there to connect your Studium account. Once you paste your token, let me know and I'll save it."
+
+**Step 2 — Save the token:**
+
+When the user provides the token (either through the widget or pasted into chat), save it:
+
+```python
+from pathlib import Path
+
+skill_dir = Path("<skill-directory>")
+env_content = f'''export STUDIUM_API_KEY="{user_token}"
+export STUDIUM_BASE_URL="https://uppsala.instructure.com"
+'''
+(skill_dir / ".env.studium").write_text(env_content)
+```
+
+**Step 3 — Verify the connection:**
+
+Test that it works by fetching their courses:
+
+```bash
+source <skill-directory>/.env.studium
+python3 <skill-directory>/scripts/studium_quiz.py courses
+```
+
+If courses come back, tell the user which courses were found and ask which one they'd like to study from. If it fails, help troubleshoot (wrong token, expired, network issue).
+
+### Returning Users
+
+On subsequent uses, load the saved credentials:
+
+```bash
+source <skill-directory>/.env.studium
+```
+
+If the file exists and the token works, skip the onboarding and go straight to fetching content.
+
+## How It Works — Three Steps
+
+Every workflow follows the same pattern:
+
+1. **Get content** — from Studium courses, user-pasted text, or a PDF
+2. **Generate questions** — flashcards or quiz questions from the content
+3. **Present interactively** — write a self-contained HTML file and show it inline
+
+## Fetching Content from Studium
+
+Once connected, pull course content like this:
+
+```bash
+source <skill-directory>/.env.studium
+
+# List the user's courses
+python3 <skill-directory>/scripts/studium_quiz.py courses
+
+# Get the latest lecture/page content from a course
+python3 <skill-directory>/scripts/studium_quiz.py latest --course <course_id>
+
+# Generate a quiz prompt from the latest content
+python3 <skill-directory>/scripts/studium_quiz.py prompt --course <course_id> --type quiz
+
+# Or generate a flashcard prompt
+python3 <skill-directory>/scripts/studium_quiz.py prompt --course <course_id> --type flashcards
+```
+
+The `prompt` command returns a structured prompt with the content embedded. Use it to generate questions, then inject them into the HTML templates.
 
 ### Full "Quiz me on my latest lecture" Workflow
 
-1. **Load Studium credentials**: `source .env.studium`
-2. **Fetch courses**: `python3 scripts/studium_quiz.py courses`
-3. **Get latest content**: `python3 scripts/studium_quiz.py latest --course <id>`
-4. **Generate questions** from the content (LLM generates from returned text)
-5. **Save deck**: Use `study_manager.create_deck()`
-6. **Present via Canvas**: Inject into quiz.html or flashcards.html
+1. Load credentials: `source <skill-directory>/.env.studium`
+2. Fetch courses: `python3 scripts/studium_quiz.py courses`
+3. If the user hasn't specified a course, show the list and ask which one
+4. Get latest content: `python3 scripts/studium_quiz.py latest --course <id>`
+5. Generate quiz questions from the returned text (the LLM does this part)
+6. Save deck with `study_manager.create_deck()`
+7. Inject into the quiz HTML template and present inline
+
+## Presenting Content (Platform-Adaptive)
+
+The skill produces self-contained HTML files by injecting data into templates. The data injection step is the same everywhere — only the final "show it to the user" step differs per platform. Detect which environment you're in and use the matching method.
+
+### Step 1 (all platforms): Build the HTML
+
+```python
+import json
+from pathlib import Path
+
+# 1. Read the template
+skill_dir = Path("<skill-directory>")
+template = (skill_dir / "assets" / "quiz.html").read_text()
+
+# 2. Build the JS data block
+js_data = f'''
+const QUIZ_TITLE = {json.dumps(title)};
+const QUESTIONS = {json.dumps(questions)};
+'''
+
+# 3. Inject into template (replaces the placeholder comment)
+html = template.replace("/*QUESTIONS_DATA*/", js_data)
+```
+
+### Step 2: Present it (pick the right method for the environment)
+
+#### OpenClaw / ClawdBot (Canvas tool available)
+
+If you have access to the `canvas` tool, use it directly. This is the primary path for OpenClaw and ClawdBot — it presents the HTML inline in the chat.
+
+```python
+# Option A: Write to temp file and present (best for larger content)
+Path("/tmp/study-session.html").write_text(html)
+canvas(action="present", url="file:///tmp/study-session.html")
+
+# Option B: Data URL (works for smaller content)
+import urllib.parse
+canvas(action="present", url=f"data:text/html;charset=utf-8,{urllib.parse.quote(html)}")
+```
+
+The Canvas receives postMessage events for interactive feedback:
+- `cardUpdate` — card was reviewed (save to study-data)
+- `quizComplete` — quiz finished (log results)
+- `sessionComplete` — flashcard session done
+
+#### Claude Desktop / Cowork (file + computer:// link)
+
+Write the HTML file to the **outputs folder** and link it with a `computer://` URL so it renders as an inline widget:
+
+```python
+output_path = Path("<outputs-folder>/quiz.html")
+output_path.write_text(html)
+# Then show: [Take the quiz](computer://<outputs-folder>/quiz.html)
+```
+
+Use descriptive filenames like `nlp-lecture-3-quiz.html` or `swedish-vocab-flashcards.html`.
+
+#### Codex CLI / Terminal (file + browser)
+
+Write the file and tell the user to open it in their browser:
+
+```python
+output_path = Path("/tmp/study-session.html")
+output_path.write_text(html)
+# Tell user: "Quiz saved to /tmp/study-session.html — open it in your browser."
+```
 
 ## Core Workflows
 
 ### 1. Creating Flashcards
 
-From pasted content:
+From any content, generate card pairs:
+
 ```python
-# Generate card pairs from content
 cards = [
-    {"front": "Question/term", "back": "Answer/definition"},
-    ...
+    {"front": "What does HTTP stand for?", "back": "HyperText Transfer Protocol"},
+    {"front": "What layer is TCP?", "back": "Transport layer (Layer 4)"},
 ]
+```
 
-# Save deck
+Save the deck:
+
+```python
 from scripts.study_manager import create_deck
-deck = create_deck("Deck Name", source="manual", cards=cards)
-```
-
-From Studium:
-```bash
-# Get course materials
-source .env.studium
-python3 skills/studium/scripts/studium.py assignments <course_id>
-
-# Create deck from assignment/readings
-```
-
-From PDF:
-```bash
-# Extract text first, then generate cards from content
+deck = create_deck("Networking Basics", source="manual", cards=cards)
 ```
 
 ### 2. Presenting Flashcards
@@ -99,26 +208,23 @@ From PDF:
 Inject data into `assets/flashcards.html`:
 
 ```python
-# Generate JavaScript data
+import json
+from pathlib import Path
+
 deck = load_deck(deck_id)
 js_data = f'''
-const DECK_TITLE = "{deck['name']}";
-const CARDS = {json.dumps(deck['cards'])};
+const DECK_TITLE = {json.dumps(deck["name"])};
+const CARDS = {json.dumps(deck["cards"])};
 '''
 
-# Read template, inject data, present
-template = Path("assets/flashcards.html").read_text()
+template = Path("<skill-directory>/assets/flashcards.html").read_text()
 html = template.replace("/*CARDS_DATA*/", js_data)
-
-# Present via Canvas
 ```
 
-Then use canvas tool:
-```
-canvas action=present url="data:text/html,..." 
-```
-
-Or write to temp file and present.
+Then present using the platform-appropriate method (see "Presenting Content" section above):
+- **OpenClaw/ClawdBot**: `canvas(action="present", url="file:///tmp/flashcards.html")`
+- **Claude Desktop**: Write to outputs folder, link with `computer://`
+- **Codex CLI**: Write to file, tell user to open in browser
 
 ### 3. Generating Quizzes
 
@@ -143,25 +249,16 @@ Create varied question types from content:
 }
 ```
 
-Inject into `assets/quiz.html`:
-```python
-js_data = f'''
-const QUIZ_TITLE = "Quiz Title";
-const QUESTIONS = {json.dumps(questions)};
-'''
-```
+Inject into `assets/quiz.html` using the `/*QUESTIONS_DATA*/` placeholder, same pattern as flashcards.
 
 ### 4. Spaced Repetition (SM-2)
 
 After each card review, user rates recall:
-- **Again (0)**: Complete failure → reset, review soon
-- **Hard (1)**: Correct with difficulty → short interval
-- **Good (2)**: Correct with hesitation → normal interval
-- **Easy (3)**: Perfect recall → longer interval
 
-The algorithm adjusts:
-- `interval`: Days until next review
-- `ease`: Multiplier for future intervals (starts at 2.5)
+- **Again (0)**: Complete failure — reset, review soon
+- **Hard (1)**: Correct with difficulty — short interval
+- **Good (2)**: Correct with hesitation — normal interval
+- **Easy (3)**: Perfect recall — longer interval
 
 ```python
 from scripts.study_manager import update_card
@@ -171,48 +268,40 @@ update_card(deck_id, card_id, rating=2)  # Good
 ### 5. Dashboard
 
 Show study progress:
+
 ```python
 from scripts.study_manager import get_dashboard_data
 data = get_dashboard_data()
-# Returns: totalCards, dueToday, mastered, streak, decks, activity
 ```
 
-Present via `assets/dashboard.html`.
+Inject into `assets/dashboard.html` using the `/*STUDY_DATA*/` placeholder.
 
 ## Data Storage
 
-All study data stored in `workspace/study-data/`:
-- `decks.json` - Deck index and global stats
-- `{deck-id}.json` - Individual deck cards with SR data
+The study manager stores data in a configurable location. Set the `STUDY_DATA_DIR` environment variable, or it defaults to `~/.study-buddy/data/`.
 
-## Studium Integration
-
-Pull materials from Uppsala University's Canvas LMS:
-
-```bash
-source .env.studium
-
-# Get course list
-python3 skills/studium/scripts/studium.py courses
-
-# Get assignments
-python3 skills/studium/scripts/studium.py assignments <course_id>
-
-# Get specific content
-python3 skills/studium/scripts/studium.py download <course_id> --type pages
+```python
+# Override data location if needed
+import scripts.study_manager as sm
+sm.DATA_DIR = Path("/custom/path/study-data")
 ```
 
-Then generate cards/quizzes from the content.
+Files stored:
+
+- `decks.json` — Deck index and global stats
+- `{deck-id}.json` — Individual deck cards with spaced repetition data
 
 ## Question Generation Guidelines
 
 When generating questions from content:
 
-1. **Cover key concepts** - Focus on main ideas, not trivia
-2. **Vary difficulty** - Mix recall, comprehension, application
-3. **Clear distractors** - Wrong options should be plausible but clearly wrong
-4. **Concise wording** - Avoid unnecessarily complex phrasing
-5. **One concept per card** - Atomic knowledge units
+1. **Cover key concepts** — focus on main ideas, not trivia
+2. **Vary difficulty** — mix recall, comprehension, and application questions
+3. **Clear distractors** — wrong options should be plausible but clearly wrong
+4. **Concise wording** — avoid unnecessarily complex phrasing
+5. **One concept per card** — atomic knowledge units
+
+See `references/question-patterns.md` for Bloom's taxonomy patterns and templates.
 
 **Good flashcard:**
 - Front: "What does HTTP stand for?"
@@ -222,43 +311,24 @@ When generating questions from content:
 - Front: "Explain everything about HTTP including its history, methods, and status codes"
 - Back: [wall of text]
 
-## Canvas Presentation
-
-Use the canvas tool to display interactive UIs:
-
-```python
-# Option 1: Data URL (for small content)
-html_content = "..."  # Full HTML with injected data
-canvas(action="present", url=f"data:text/html;charset=utf-8,{urllib.parse.quote(html_content)}")
-
-# Option 2: File (for larger content)
-Path("/tmp/study-session.html").write_text(html_content)
-canvas(action="present", url="file:///tmp/study-session.html")
-```
-
-The Canvas receives postMessage events for:
-- `cardUpdate` - Card was reviewed (save to study-data)
-- `quizComplete` - Quiz finished (log results)
-- `sessionComplete` - Flashcard session done
-
 ## Examples
 
 **"Create flashcards for Swedish vocabulary"**
-1. Generate Swedish-English pairs
+1. Generate Swedish-English card pairs
 2. Create deck with `create_deck("Swedish Vocab", cards=...)`
-3. Present flashcards via Canvas
+3. Write flashcards HTML and present inline
 
 **"Quiz me on Chapter 5"**
-1. User provides/pastes chapter content
+1. User provides or pastes chapter content
 2. Generate 10-15 multiple choice questions
-3. Present quiz via Canvas
-4. Report score when complete
+3. Write quiz HTML and present inline
+4. Report score when quiz is complete
 
 **"What's due for review?"**
 1. Call `get_due_cards()`
-2. If cards due: present flashcard session
+2. If cards due: build flashcard session, present inline
 3. If none: "All caught up! Next review: [date]"
 
 **"Show my study stats"**
 1. Call `get_dashboard_data()`
-2. Present dashboard via Canvas
+2. Write dashboard HTML and present inline

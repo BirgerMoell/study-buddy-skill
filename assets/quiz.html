@@ -6,252 +6,298 @@
   <title>Quiz</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
       min-height: 100vh;
-      padding: 24px;
+      padding: 20px;
       color: #e4e4e7;
     }
-    
+
     .quiz-header {
       max-width: 600px;
-      margin: 0 auto 24px;
+      margin: 0 auto 20px;
       text-align: center;
     }
-    
+
     .quiz-header h1 {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    
+
     .progress-container {
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    
+
     .progress-bar {
       flex: 1;
-      height: 8px;
+      height: 6px;
       background: #374151;
-      border-radius: 4px;
+      border-radius: 3px;
       overflow: hidden;
     }
-    
+
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #10b981, #34d399);
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
       transition: width 0.3s ease;
     }
-    
+
     .progress-text {
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       color: #9ca3af;
-      min-width: 60px;
+      min-width: 50px;
+      text-align: right;
     }
-    
+
     .question-card {
       max-width: 600px;
       margin: 0 auto;
       background: linear-gradient(145deg, #1e293b, #334155);
       border: 1px solid #475569;
       border-radius: 16px;
-      padding: 32px;
+      padding: 28px;
     }
-    
+
     .question-number {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: #6366f1;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      font-weight: 600;
     }
-    
+
     .question-text {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       line-height: 1.6;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
-    
+
     .options {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
-    
+
     .option {
-      padding: 16px 20px;
+      padding: 14px 16px;
       background: #0f172a;
       border: 2px solid #374151;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       gap: 12px;
+      font-size: 0.95rem;
     }
-    
+
     .option:hover:not(.disabled) {
       border-color: #6366f1;
       background: #1e1b4b;
     }
-    
+
     .option.selected {
       border-color: #6366f1;
       background: #312e81;
     }
-    
+
     .option.correct {
       border-color: #10b981;
       background: #064e3b;
     }
-    
+
     .option.incorrect {
       border-color: #ef4444;
       background: #7f1d1d;
     }
-    
+
     .option.disabled {
       cursor: default;
       opacity: 0.7;
     }
-    
+
+    .option.show-correct {
+      border-color: #10b981;
+      opacity: 1;
+    }
+
     .option-letter {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 6px;
       background: #374151;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 600;
-      font-size: 0.875rem;
+      font-size: 0.8rem;
+      flex-shrink: 0;
     }
-    
+
     .option.correct .option-letter {
       background: #10b981;
     }
-    
+
     .option.incorrect .option-letter {
       background: #ef4444;
     }
-    
+
+    .option.show-correct .option-letter {
+      background: #10b981;
+    }
+
     .option-text {
       flex: 1;
     }
-    
+
     .feedback {
-      margin-top: 20px;
-      padding: 16px;
+      margin-top: 16px;
+      padding: 14px;
       border-radius: 10px;
       font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
     }
-    
+
     .feedback.correct {
       background: #064e3b;
       border: 1px solid #10b981;
     }
-    
+
     .feedback.incorrect {
       background: #7f1d1d;
       border: 1px solid #ef4444;
     }
-    
+
     .feedback-icon {
-      font-size: 1.25rem;
-      margin-right: 8px;
+      font-size: 1.1rem;
+      flex-shrink: 0;
     }
-    
+
+    .feedback-body {}
+
+    .feedback-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
     .explanation {
-      margin-top: 8px;
       color: #d1d5db;
       font-size: 0.85rem;
+      line-height: 1.5;
     }
-    
+
     .next-btn {
-      margin-top: 24px;
+      margin-top: 20px;
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       background: #6366f1;
       color: white;
       border: none;
       border-radius: 10px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 500;
       cursor: pointer;
       transition: background 0.2s;
     }
-    
+
     .next-btn:hover {
       background: #4f46e5;
     }
-    
+
     .hidden { display: none; }
-    
+
     .results {
       max-width: 600px;
       margin: 0 auto;
       text-align: center;
-      padding: 48px 32px;
+      padding: 40px 28px;
       background: linear-gradient(145deg, #1e293b, #334155);
       border: 1px solid #475569;
       border-radius: 16px;
     }
-    
+
+    .results-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
     .results h2 {
-      font-size: 2rem;
+      font-size: 1.5rem;
       margin-bottom: 8px;
     }
-    
+
     .score {
-      font-size: 4rem;
+      font-size: 3.5rem;
       font-weight: 700;
       background: linear-gradient(135deg, #10b981, #34d399);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    
+
     .score-label {
       color: #9ca3af;
       margin-bottom: 24px;
+      font-size: 0.9rem;
     }
-    
+
     .breakdown {
       display: flex;
       justify-content: center;
       gap: 32px;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
     }
-    
+
     .breakdown-item {
       text-align: center;
     }
-    
+
     .breakdown-value {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 600;
     }
-    
-    .breakdown-value.correct { color: #10b981; }
-    .breakdown-value.incorrect { color: #ef4444; }
-    
+
+    .breakdown-value.correct-color { color: #10b981; }
+    .breakdown-value.incorrect-color { color: #ef4444; }
+
     .breakdown-label {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #9ca3af;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    
+
     .retry-btn {
-      padding: 14px 48px;
+      padding: 12px 40px;
       background: #6366f1;
       color: white;
       border: none;
       border-radius: 10px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .retry-btn:hover {
+      background: #4f46e5;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+      .question-card { padding: 20px; }
+      .question-text { font-size: 1rem; }
+      .option { padding: 12px; font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -272,23 +318,26 @@
     <div class="options" id="options"></div>
     <div class="feedback hidden" id="feedback">
       <span class="feedback-icon" id="feedback-icon"></span>
-      <span id="feedback-text"></span>
-      <div class="explanation" id="explanation"></div>
+      <div class="feedback-body">
+        <div class="feedback-title" id="feedback-text"></div>
+        <div class="explanation" id="explanation"></div>
+      </div>
     </div>
     <button class="next-btn hidden" id="next-btn" onclick="nextQuestion()">Next Question</button>
   </div>
 
   <div class="results hidden" id="results">
+    <div class="results-icon" id="results-icon"></div>
     <h2>Quiz Complete!</h2>
     <div class="score" id="final-score">0%</div>
     <div class="score-label">Overall Score</div>
     <div class="breakdown">
       <div class="breakdown-item">
-        <div class="breakdown-value correct" id="correct-count">0</div>
+        <div class="breakdown-value correct-color" id="correct-count">0</div>
         <div class="breakdown-label">Correct</div>
       </div>
       <div class="breakdown-item">
-        <div class="breakdown-value incorrect" id="incorrect-count">0</div>
+        <div class="breakdown-value incorrect-color" id="incorrect-count">0</div>
         <div class="breakdown-label">Incorrect</div>
       </div>
     </div>
@@ -296,89 +345,100 @@
   </div>
 
   <script>
-    // Questions injected as: const QUESTIONS = [...]
-    // Format: { question, options: [], correct: 0, explanation?: "" }
-    
+    // Data injected here by the skill:
+    // const QUIZ_TITLE = "...";
+    // const QUESTIONS = [...];
+
     /*QUESTIONS_DATA*/
-    
+
     let currentIndex = 0;
     let correctCount = 0;
     let answered = false;
-    
+
     function init() {
       if (typeof QUESTIONS === 'undefined' || QUESTIONS.length === 0) {
-        document.body.innerHTML = '<div class="results"><h2>No questions</h2></div>';
+        document.body.innerHTML = '<div class="results"><h2>No questions loaded</h2><p style="color:#9ca3af">Questions data was not injected into this template.</p></div>';
         return;
       }
-      
+
       document.getElementById('total').textContent = QUESTIONS.length;
-      document.getElementById('quiz-title').textContent = QUIZ_TITLE || 'Quiz';
+      document.getElementById('quiz-title').textContent = (typeof QUIZ_TITLE !== 'undefined' && QUIZ_TITLE) ? QUIZ_TITLE : 'Quiz';
       showQuestion();
     }
-    
+
     function showQuestion() {
       answered = false;
       const q = QUESTIONS[currentIndex];
-      
-      document.getElementById('question-number').textContent = `Question ${currentIndex + 1}`;
+
+      document.getElementById('question-number').textContent = 'Question ' + (currentIndex + 1);
       document.getElementById('question-text').textContent = q.question;
       document.getElementById('current').textContent = currentIndex + 1;
-      document.getElementById('progress').style.width = 
+      document.getElementById('progress').style.width =
         ((currentIndex / QUESTIONS.length) * 100) + '%';
-      
+
       const optionsEl = document.getElementById('options');
       optionsEl.innerHTML = '';
-      
+
       const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
-      q.options.forEach((opt, i) => {
+      q.options.forEach(function(opt, i) {
         const div = document.createElement('div');
         div.className = 'option';
-        div.innerHTML = `
-          <div class="option-letter">${letters[i]}</div>
-          <div class="option-text">${opt}</div>
-        `;
-        div.onclick = () => selectOption(i);
+        div.innerHTML = '<div class="option-letter">' + letters[i] + '</div><div class="option-text">' + escapeHtml(opt) + '</div>';
+        div.onclick = function() { selectOption(i); };
         optionsEl.appendChild(div);
       });
-      
+
       document.getElementById('feedback').classList.add('hidden');
+      document.getElementById('feedback').classList.remove('correct', 'incorrect');
       document.getElementById('next-btn').classList.add('hidden');
     }
-    
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     function selectOption(index) {
       if (answered) return;
       answered = true;
-      
+
       const q = QUESTIONS[currentIndex];
       const isCorrect = index === q.correct;
-      
+
       if (isCorrect) correctCount++;
-      
+
       const options = document.querySelectorAll('.option');
-      options.forEach((opt, i) => {
+      options.forEach(function(opt, i) {
         opt.classList.add('disabled');
-        if (i === q.correct) opt.classList.add('correct');
-        else if (i === index) opt.classList.add('incorrect');
+        if (i === q.correct) {
+          opt.classList.add(i === index ? 'correct' : 'show-correct');
+        } else if (i === index) {
+          opt.classList.add('incorrect');
+        }
       });
-      
+
       const feedback = document.getElementById('feedback');
       feedback.classList.remove('hidden', 'correct', 'incorrect');
       feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
-      
+
       document.getElementById('feedback-icon').textContent = isCorrect ? '✓' : '✗';
       document.getElementById('feedback-text').textContent = isCorrect ? 'Correct!' : 'Incorrect';
       document.getElementById('explanation').textContent = q.explanation || '';
-      
-      document.getElementById('next-btn').classList.remove('hidden');
-      document.getElementById('next-btn').textContent = 
-        currentIndex < QUESTIONS.length - 1 ? 'Next Question' : 'See Results';
-      
-      window.parent?.postMessage({
-        type: 'questionAnswer',
-        data: { question: currentIndex, correct: isCorrect, selected: index }
-      }, '*');
+
+      const nextBtn = document.getElementById('next-btn');
+      nextBtn.classList.remove('hidden');
+      nextBtn.textContent = currentIndex < QUESTIONS.length - 1 ? 'Next Question' : 'See Results';
+
+      // Notify parent (for Canvas/iframe environments)
+      try {
+        window.parent.postMessage({
+          type: 'questionAnswer',
+          data: { question: currentIndex, correct: isCorrect, selected: index }
+        }, '*');
+      } catch(e) {}
     }
-    
+
     function nextQuestion() {
       currentIndex++;
       if (currentIndex >= QUESTIONS.length) {
@@ -387,23 +447,29 @@
         showQuestion();
       }
     }
-    
+
     function showResults() {
       document.getElementById('question-card').classList.add('hidden');
+      document.querySelector('.quiz-header').classList.add('hidden');
       document.getElementById('results').classList.remove('hidden');
-      document.getElementById('progress').style.width = '100%';
-      
-      const score = Math.round((correctCount / QUESTIONS.length) * 100);
+
+      var score = Math.round((correctCount / QUESTIONS.length) * 100);
       document.getElementById('final-score').textContent = score + '%';
       document.getElementById('correct-count').textContent = correctCount;
       document.getElementById('incorrect-count').textContent = QUESTIONS.length - correctCount;
-      
-      window.parent?.postMessage({
-        type: 'quizComplete',
-        data: { score, correct: correctCount, total: QUESTIONS.length }
-      }, '*');
+
+      // Pick a result icon based on score
+      var icon = score >= 80 ? '🎉' : score >= 60 ? '👍' : score >= 40 ? '📚' : '💪';
+      document.getElementById('results-icon').textContent = icon;
+
+      try {
+        window.parent.postMessage({
+          type: 'quizComplete',
+          data: { score: score, correct: correctCount, total: QUESTIONS.length }
+        }, '*');
+      } catch(e) {}
     }
-    
+
     init();
   </script>
 </body>
